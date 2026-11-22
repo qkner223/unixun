@@ -59,7 +59,7 @@ export_arch_timer = true
 
 [firmware]
 config = "cas"
-dsc = "casPkg/cas.dsc"
+dsc = "casPkg/cas-upstream.dsc"
 fd = "Build/casUpstream001/{target}_CLANGPDB/FV/SILICIUM_UEFI.fd"
 defines = { CAS_BUILD_DIR = "Build/casUpstream001" }
 packages = ["{uefi}/Platforms/Xiaomi", "{uefi}/Common/Mu", "{uefi}/Common/Mu_OEM_Sample", "{uefi}/Mu_Basecore", "{uefi}/Silicon/Qualcomm", "{uefi}/Silicon/Silicium", "{tree}/package", "{tree}/drivers/DarwinBoot", "{edk2}"]

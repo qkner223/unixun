@@ -182,3 +182,20 @@ cas 的板级只覆盖 `[adt.root.string].hardware-model` 和 `[payload.adt]` �
 4. `fastboot boot` 到 DarwinBoot 交接；
 5. 用 boot-progress / NC mailbox 定位第一个 panic；
 6. 再谈 UFS 根卷和显示。
+
+
+## 构建产物（2026-11-22）
+
+| 产物 | 尺寸 | sha256 |
+| --- | --- | --- |
+| `boot.img` | 101511168 | `1f14cc0f84ca8717054e8f37568f7fda4bf9a0a3622ad01b46c91f16b91a3af2` |
+| `SILICIUM_UEFI.fd` | 8388608 | `11f034c9dc403a0d2a2e40a3f12b1e8d0bf11ee011d753048bca45549234a38e` |
+| `payload.img` | 100663296 | `381c68d50331d198353e575b46382289058d6664942167644046eb694d5ea8d1` |
+| `kernel.macho` | — | `386f10ac80fffd8a9ff19af8723dcb543c42452be80b47a7e03b036a8f0ea49c` |
+
+固件来自 `uefi-cas` 的 `main` 分支（`cas` 分支缺 `BootShim/CasBootLog.S`，且没有
+`casPkg/cas-upstream.dsc`）。stock DTB 用本机手机 boot.img 的第 2 个 DTB
+（533297 字节，sha256 `d7dcb539…`），`Resources/Configs/cas.toml` 的三个 pin 已按它更新；
+上游 pin（536890 字节）属于作者那台机器的 ROM 版本。
+
+刷入：`fastboot boot boot.img`（临时启动，不写 flash）。
