@@ -59,7 +59,7 @@ export_arch_timer = true
 
 [firmware]
 config = "cas"
-dsc = "casPkg/cas-upstream.dsc"
+dsc = "casPkg/cas.dsc"
 fd = "Build/casUpstream001/{target}_CLANGPDB/FV/SILICIUM_UEFI.fd"
 defines = { CAS_BUILD_DIR = "Build/casUpstream001" }
 packages = ["{uefi}/Platforms/Xiaomi", "{uefi}/Common/Mu", "{uefi}/Common/Mu_OEM_Sample", "{uefi}/Mu_Basecore", "{uefi}/Silicon/Qualcomm", "{uefi}/Silicon/Silicium", "{tree}/package", "{tree}/drivers/DarwinBoot", "{edk2}"]
@@ -88,7 +88,6 @@ kernel_args = ["-v", "keepsyms=1", "debug=0x14e", "kt_fixed_zones=120", "boot-pr
 # T8015 is the chip the forged iPhone X identity reports; the iPad7,1 profile
 # used 8011 (T8010).
 chip_id = "8015"
-owned_memory_size = "0x130000000"
 cpu_regs = "0"
 psci_method = "smc"
 # iOS 16.5 is a phone target: the profile forges iPhone X (iPhone10,3 / D22AP),
