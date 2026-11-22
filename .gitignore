@@ -1,0 +1,6 @@
+out/
+refer/
+.cache/
+*.ipsw
+*.tar.gz
+logs/

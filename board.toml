@@ -1,0 +1,100 @@
+# UniXNU board description for the Xiaomi 10 Ultra (cas, SM8250).
+#
+# Target changed from iPadOS 17.7.11 / xnu-10063.141.1 to iOS 16.5 (20F66,
+# Darwin 22.5.0, XNU 8796.101.5). The OS profile lives in this repository at
+# os-profiles/ios-16.5-20F66/ and must be installed into the UniXNU checkout at
+# profiles/os/ios-16.5-20F66/ before a build resolves; see scripts/install-profile.sh.
+#
+# Hardware values are unchanged from the cas main record: DRAM banks, 31
+# reserved regions, UFS host 0x1d84000, userdata extents read from the cas GPT.
+# Only the OS identity and the patch series move.
+
+schema_version = 2
+
+[board]
+name = "cas"
+arch = "AARCH64"
+kit = "cas"
+soc = "SM8250"
+soc_source = "sm8250"
+# iOS 16.5 build 20F66, Darwin 22.5.0, XNU 8796.101.5, iPhone X identity.
+os_profile = "ios-16.5-20F66"
+description = "Xiaomi 10 Ultra (cas): iOS 16.5 (20F66) on UniXNU, arm64, 4 KiB pages"
+
+[components]
+include = ["ArmDTPlatform", "ArmCpu", "SoftwareAES", "XnuPrelink", "DarwinBoot"]
+
+[kernel]
+defconfig = "cas_defconfig"
+# ios.config comes from the OS profile directory, not from UniXNU upstream.
+config_fragments = ["arch:configs/common.config", "soc:configs/sm8250.config", "os:configs/ios.config"]
+# The shared arch / soc / os series still target xnu-10063.141.1 and abort
+# `unixnu status` on an 8796 tree with "patch missing". patches/xnu/series holds
+# the whole resolved order rebased onto xnu-8796.101.5 and verified to apply
+# strictly in sequence (64 patches, 2026-11-22). Restore the four-series form
+# below once upstream rebases its own copies:
+#   ["arch:patches/xnu/series", "soc:patches/xnu/series",
+#    "os:patches/xnu/series", "device:patches/xnu/series"]
+patch_series = ["device:patches/xnu/series"]
+# cas-armcpu-sleep-hook.py runs before component:ArmCpu; cas-armcpu-asm-fix.py is gone: upstream ArmCpu at the revision this tree resolves
+# already uses the "\n\t" separator form the patch rewrote, so the patch no
+# longer applies and the fix is redundant.
+# mockfs stays on: cas_defconfig sets CONFIG_XNU_SOURCE_MOCKFS=y (device layer wins
+# over the OS fragment), vfs_conf.o compiles with -DMOCKFS=1, and the fixture
+# archive is therefore a link input. Dropping the archive fails the link with
+# undefined _mockfs_mountroot / _mockfs_vfsops / _mockfs_vop_desc.
+archives = ["build-corecrypto-14.py", "build-corecrypto-14.py --namespace", "component:ArmDTPlatform", "cas-armcpu-sleep-hook.py", "component:ArmCpu", "component:SoftwareAES", "build-software-aes-bindings.py", "build-mockfs-fixture.py", "build-libpthread-kernel.py"]
+
+# [ipsw] and [kernel.prelink] are inherited from os-profiles/ios-16.5-20F66/:
+# the iPhone X 16.5 restore image, kernelcache sha256, slide, roots and the
+# payload trust caches. Tables merge by key, so override a single field here if
+# this board ever needs it. Never copy those values from the 17.7.11 profile:
+# the prelink ABI is version bound.
+
+[device_tree]
+source = "device:dts/cas.dts"
+include_dirs = ["soc:dts"]
+preserve_memory_ranges = true
+export_arch_timer = true
+
+[firmware]
+config = "cas"
+dsc = "casPkg/cas-upstream.dsc"
+fd = "Build/casUpstream001/{target}_CLANGPDB/FV/SILICIUM_UEFI.fd"
+defines = { CAS_BUILD_DIR = "Build/casUpstream001" }
+packages = ["{uefi}/Platforms/Xiaomi", "{uefi}/Common/Mu", "{uefi}/Common/Mu_OEM_Sample", "{uefi}/Mu_Basecore", "{uefi}/Silicon/Qualcomm", "{uefi}/Silicon/Silicium", "{tree}/package", "{tree}/drivers/DarwinBoot", "{edk2}"]
+
+# userdata on LUN0 (sda34), measured from the cas GPT; it holds the iOS root image.
+# Writing the OS / SystemOS windows here overwrites Android's /data.
+[userdata]
+first_lba = 0x2c0000
+last_lba = 0x3b4b7fa
+lba_bytes = 4096
+windows = [
+  { name = "OS", component = "OS" },
+  { name = "SystemOS", component = "Cryptex1,SystemOS" },
+]
+
+[payload]
+volume = "CAS_IOS165"
+size_mib = 96
+loader = "firmware"
+title = "cas iOS 16.5"
+timeout = 3
+panic_screen = true
+kernel_args = ["-v", "keepsyms=1", "debug=0x14e", "kt_fixed_zones=120", "boot-progress=2"]
+
+[payload.adt]
+# T8015 is the chip the forged iPhone X identity reports; the iPad7,1 profile
+# used 8011 (T8010).
+chip_id = "8015"
+owned_memory_size = "0x130000000"
+cpu_regs = "0"
+psci_method = "smc"
+# iOS 16.5 is a phone target: the profile forges iPhone X (iPhone10,3 / D22AP),
+# so the iPad identity flag must stay off.
+ipad_identity = false
+unique_chip_id = "required"
+
+[adt.root.string]
+hardware-model = "Qualcomm Technologies, Inc. xiaomi cas"
